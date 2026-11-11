@@ -1,0 +1,6 @@
+---
+title: "proposal"
+author: "Emma, Giuliana, Max, Jonathan"
+date: "2026-11-11"
+output: github_document
+---
