@@ -1,5 +1,118 @@
-proposal
+Final Project Proposal
 ================
 Emma, Giuliana, Max, Jonathan
 2026-11-11
 
+## The group members (names and UNIs)
+
+Giuliana Motta (gem2176), Jonathan Morris (jsm2298), Max Hyman
+(mjh2289), Emma Johnston (eej2124)
+
+## The tentative project title
+
+311, What’s Your Emergency? Pigeons.
+
+## The motivation for this project
+
+As an avid New York City birder, I look through my binoculars each
+weekend. And what do I see? Pigeons. From a distance, these birds are,
+at most, a minor nuisance (as they scare away other birds). However, to
+many people, they are enough of a bother to submit pigeon-related
+complaints via 311. We were curious to investigate the issues these
+pigeons cause in the lives of New Yorkers.
+
+## The intended final products
+
+We want to describe and analyze pigeon-related complaints in NYC using
+publicly available data from 311 Complaint Data that feature the word
+‘pigeon’. This will include static visualizations that characterize
+complaints by time, location, income level, and building type.
+Furthermore, we will identify the species of pigeons that are present in
+NYC using eBird. We also plan to create a dashboard that utilizes the
+API available via the data source to provide real-time pigeon complaint
+updates. Finally, we will analyze factors that may be associated with
+pigeon complaints and response time, including time, building type,
+location/borough, and socioeconomic factors, such as income.
+
+## The anticipated data sources
+
+311 Pigeon Complaint Data:
+<https://data.cityofnewyork.us/Social-Services/contains-Pigeon-/iea7-sinw/about_data>
+
+eBird Observation Dataset (EOD):
+<https://www.gbif.org/dataset/4fa7b334-ce0d-4e88-aaae-2e0c138d049e>
+
+Census data (for income):
+<https://www.census.gov/topics/income-poverty/income/data/tables.html>
+
+## The planned analyses / visualizations / coding challenges
+
+### Planned analyses:
+
+1)  Temporal trend of complaints
+
+- 16 years of data - have the amount of complaints changed?
+
+- yearly and seasonal trends in the level of complaints
+
+2)  Geographical distribution of complaints
+
+- By borough and neighborhood
+
+- temporal trends of pigeon complaints by borough
+
+3)  Type and details of pigeon-related complaint
+
+- Problem: Unsanitary pigeon condition or trapping pigeon
+
+- Problem detail: Pigeon waste or pigeon odor
+
+4)  Pigeon complaint by building type
+
+- mixed use apartment, residential building, school, street area
+
+5)  Brief scientific overview of pigeon species in NYC
+
+6)  Are there correlations between where pigeon sightings are reported
+    on eBird and where people file pigeon complaints?
+
+7)  Use an API and have a dashboard of real-time pigeon reporting
+
+8)  How long it takes for a 311 Pigeon call to get resolved
+
+- could look at that by income
+
+### Visualizations:
+
+- Tables or bar charts for intended final projects (especially location
+  type and borough)
+
+- Chart showing temporal trends in pigeons
+
+- histogram of how long it takes to resolve a pigeon complaint. We could
+  vary that by borough or income level
+
+- Map of pigeon sightings and map of pigeon complaints
+
+### Potential coding challenges:
+
+- Amount of pigeon data available (we have 16 years of data, but
+  realistically how many people are submitting pigeon complaints?)
+
+- How the data is stratified within the datasets
+
+- Co-locating pigeon species data to New York City using longitude and
+  latitude
+
+- Working with dates and timestamps for the complaints (when the
+  complaints were opened and closed)
+
+- Some of the complaints have not been closed, so we have NA data for a
+  lot of complaint closures
+
+## The planned timeline
+
+11/17 Meet to plan data cleaning 11/22 Tidy the data 12/2 meet and
+figure out analysis 12/6 Do the analysis, write the report, make
+visualizations 12/10 Report, website, and screencast 12/12 Submit
+everything
