@@ -1,0 +1,76 @@
+---
+title: "Data Cleaning"
+author: "Everyone"
+date: "2026-11-17"
+output: html_document
+---
+
+## Load packages:
+```{r}
+library(tidyverse)
+library(tidycensus)
+library(lubridate)
+library(sf)
+```
+
+## Load Data:
+```{r}
+pigeon_df = read_csv("data/contains_'Pigeon'_20261117.csv") |> 
+  janitor::clean_names() |> 
+  select(unique_key, created_date, closed_date, problem_formerly_complaint_type, 
+problem_detail_formerly_descriptor, location_type, incident_zip, latitude, longitude, borough, status, 	
+resolution_description, resolution_action_updated_date, location) |> 
+  mutate(
+    created_date = ymd_hms(created_date),
+    closed_date = ymd_hms(closed_date),
+    complaint_type = factor(problem_formerly_complaint_type),
+    complaint_descriptor = factor(problem_detail_formerly_descriptor),
+    location_type = factor(location_type),
+    incident_zip = factor(incident_zip),
+    borough = factor(borough),
+    length_open = difftime(closed_date, created_date, units = "days")
+  ) |> 
+  select(-contains("problem")) |> 
+  relocate(unique_key, created_date, closed_date, length_open, status, location, latitude, longitude, incident_zip, borough, location_type, complaint_type, complaint_descriptor, resolution_description, resolution_action_updated_date) 
+```
+## Import Income Data
+```{r}
+## census_api_key("f8e602dfbaa32070e224824940f2b356d38db646", overwrite = TRUE, install = TRUE)
+
+income_df =
+  get_acs(
+    geography = "tract",
+    variable     = "B19013_001",
+    state     = "NY",
+    county    = c("Bronx", "Kings", "New York", "Queens", "Richmond"),
+    year      = 2024,        
+    survey    = "acs5",
+    cache_table = TRUE,
+    geometry = TRUE) |> 
+  st_transform(4326) |> 
+  select(geometry, estimate, moe)
+```
+## Merge with the pigeon data:
+```{r}
+## Make a list of sf data:
+pigeon_sf = pigeon_df |> 
+  filter(!is.na(longitude)) |> 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |> 
+  select(unique_key, geometry)
+
+## Create a merged data frame of unique id's and census data:
+pigeon_merge =  pigeon_sf |> 
+  st_join(income_df, left = T)
+
+## Merge with the pigeon df:
+analytical_df = pigeon_df |> 
+  left_join(pigeon_merge, by = "unique_key") |> 
+  rename(median_inc_est = estimate, median_inc_moe = moe)
+```
+
+
+## Add E-Bird Data:
+
+## Use API to load pigeon data:
+
+
