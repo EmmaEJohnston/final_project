@@ -70,6 +70,10 @@ analytical_df = pigeon_df |>
 
 
 ## Add E-Bird Data:
+```{r}
+ebird_df = read_csv("data/ebird.csv.zip")
+```
+
 
 ## Use API to load pigeon data:
 
