@@ -77,4 +77,17 @@ ebird_df = read_csv("data/ebird.csv.zip")
 
 ## Use API to load pigeon data:
 
+## Next steps:
+1. Create new rmd with final report.
+2. Have rmd with dashboard code.
+3. Tidy and merge e-bird data.
+4. Visualizations:
+  - Mapping - GM
+  - Temporal Trends
+  - Complaint resolution length.
+  - Complaint closure randomly dispersed???
+    - Local Moran's I
+5. Copy and paste analyses.
+  - Each peson pulls an analysis.
+
 
