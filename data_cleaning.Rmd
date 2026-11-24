@@ -2,7 +2,7 @@
 title: "Data Cleaning"
 author: "Everyone"
 date: "2026-11-17"
-output: html_document
+output: github_document
 ---
 
 ## Load packages:
@@ -11,11 +11,12 @@ library(tidyverse)
 library(tidycensus)
 library(lubridate)
 library(sf)
+library(tigris)
 ```
 
-## Load Data:
+## Load and process 311 data:
 ```{r}
-pigeon_df = read_csv("data/contains_'Pigeon'_20261117.csv") |> 
+pigeon_311_df = read_csv("data/contains_'Pigeon'_20261117.csv") |> 
   janitor::clean_names() |> 
   select(unique_key, created_date, closed_date, problem_formerly_complaint_type, 
 problem_detail_formerly_descriptor, location_type, incident_zip, latitude, longitude, borough, status, 	
@@ -33,10 +34,12 @@ resolution_description, resolution_action_updated_date, location) |>
   select(-contains("problem")) |> 
   relocate(unique_key, created_date, closed_date, length_open, status, location, latitude, longitude, incident_zip, borough, location_type, complaint_type, complaint_descriptor, resolution_description, resolution_action_updated_date) 
 ```
-## Import Income Data
+## Import income data:
 ```{r}
+## Intialize API key if necessary. Otherwise, keep line commented out:
 ## census_api_key("f8e602dfbaa32070e224824940f2b356d38db646", overwrite = TRUE, install = TRUE)
 
+## Pull data from 2024:
 income_df =
   get_acs(
     geography = "tract",
@@ -50,44 +53,90 @@ income_df =
   st_transform(4326) |> 
   select(geometry, estimate, moe)
 ```
-## Merge with the pigeon data:
+## Merge income data with the 311 data:
 ```{r}
 ## Make a list of sf data:
-pigeon_sf = pigeon_df |> 
+pigeon_311_sf = pigeon_311_df |> 
   filter(!is.na(longitude)) |> 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326) |> 
   select(unique_key, geometry)
 
 ## Create a merged data frame of unique id's and census data:
-pigeon_merge =  pigeon_sf |> 
+pigeon_311_merge =  pigeon_311_sf |> 
   st_join(income_df, left = T)
 
 ## Merge with the pigeon df:
-analytical_df = pigeon_df |> 
-  left_join(pigeon_merge, by = "unique_key") |> 
+pigeon_311_df = pigeon_311_df |> 
+  left_join(pigeon_311_merge, by = "unique_key") |> 
   rename(median_inc_est = estimate, median_inc_moe = moe)
 ```
 
 
 ## Add E-Bird Data:
 ```{r}
-ebird_df = read_csv("data/ebird.csv.zip")
+## Load and process ebird data:
+pigeon_ebird_df = read_csv("data/ebird.csv.zip") |> 
+  select(gbifID, occurrenceID, recordedBy, eventDate, individualCount, 
+         locality, occurrenceStatus, decimalLatitude, decimalLongitude) |> 
+  janitor::clean_names() |> 
+  rename(latitude = decimal_latitude, longitude = decimal_longitude) |> 
+  mutate(event_date = mdy(event_date)) |> 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+## Load nyc boundary:
+nyc <- counties(state = "NY", cb = TRUE) |>
+  filter(COUNTYFP %in% c("005", "047", "061", "081", "085")) |>
+  st_transform(st_crs(pigeon_ebird_df)) |>
+  select(county = NAME)
+
+## Subset the ebird data by nyc boundaries:
+pigeon_ebird_df <- st_join(pigeon_ebird_df, nyc, left = FALSE) 
 ```
-
-
-## Use API to load pigeon data:
+## Data is loaded and cleaned. Use pigeon_ebird_df for e-bird data and pigeon_311_df for 311 data.
 
 ## Next steps:
 1. Create new rmd with final report.
-2. Have rmd with dashboard code.
-3. Tidy and merge e-bird data.
+2. Use API to load pigeon data.
+3. Have rmd with dashboard code.
 4. Visualizations:
   - Mapping - GM
   - Temporal Trends
   - Complaint resolution length.
   - Complaint closure randomly dispersed???
     - Local Moran's I
-5. Copy and paste analyses.
-  - Each peson pulls an analysis.
 
+
+
+##### Planned analyses:
+
+1)  Temporal trend of complaints
+
+- 16 years of data - have the amount of complaints changed?
+- Yearly and seasonal trends in the level of complaints
+
+2)  Geographical distribution of complaints
+
+- By borough and neighborhood (incorporate income)
+- Temporal trends of pigeon complaints by borough
+
+3)  Type and details of complaints
+
+- Problem: Unsanitary pigeon condition versus trapping pigeon
+- Problem detail: Pigeon waste versus pigeon odor
+
+4)  Pigeon complaint by building type
+
+- Residential building versus commercial building versus school versus
+  street area, etc.
+
+5)  Brief scientific overview of pigeon species in NYC
+
+6)  Are there correlations between where pigeon sightings are reported
+    on eBird and where people file pigeon complaints?
+
+7)  Use the API and have a dashboard of complaint monitoring
+
+8)  How long it takes for a 311 Pigeon call to get resolved
+
+- Overall and by geography (incorporate income)
 
