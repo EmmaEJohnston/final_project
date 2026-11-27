@@ -35,6 +35,10 @@ library(tigris)
     ## To enable caching of data, set `options(tigris_use_cache = TRUE)`
     ## in your R script or .Rprofile.
 
+``` r
+library(patchwork)
+```
+
 ## Load and process 311 data:
 
 ``` r
@@ -171,8 +175,63 @@ pigeon_ebird_df <- st_join(pigeon_ebird_df, nyc, left = FALSE)
 
 1)  Temporal trend of complaints
 
-- 16 years of data - have the amount of complaints changed?
-- Yearly and seasonal trends in the level of complaints
+- 6 years of data - have the amount of complaints changed?
+
+Yearly trends in the number of complaints
+
+``` r
+complaints_by_year = 
+  pigeon_311_df |> 
+  mutate(
+    year = year(created_date)
+  ) |> 
+  count(year, name = "n_reports")
+
+complaints_by_year |> 
+  ggplot(aes(x = year, y = n_reports)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous() +
+  scale_y_continuous() +
+  labs(
+    title = "311 Pigeon Related Complaints per Year",
+    x = "Year",
+    y = "Number of Pigeon Related Complaints"
+  ) +
+  theme_minimal()
+```
+
+![](data_cleaning_files/figure-gfm/unnamed-chunk-6-1.png)<!-- --> The
+number of pigeon-related 311 complaints steadily increased between 2020
+and 2025. 2026 not over yet –\> looks like it plateued but will most
+likely still be an increase (albeit a smaller one)
+
+Seasonal trends in the level of complaints, across all years
+
+``` r
+seasonal_complaints = 
+  pigeon_311_df |> 
+  mutate(
+    month = month(created_date, label = TRUE, abbr = TRUE)
+  ) |> 
+  count(month, name = "n_reports")
+
+seasonal_complaints |> 
+  ggplot(aes(x = month, y = n_reports, group = 1)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous() +
+  labs(
+    title = "311 Pigeon Related Complaints per Month Across Years",
+    x = "Month",
+    y = "Number of Pigeon Related Complaints"
+  ) +
+  theme_minimal()
+```
+
+![](data_cleaning_files/figure-gfm/unnamed-chunk-7-1.png)<!-- --> Each
+year, the number of 311 pigeon related complaints peaks in late summer
+before reaching a low point in December.
 
 2)  Geographical distribution of complaints
 
@@ -184,12 +243,65 @@ pigeon_ebird_df <- st_join(pigeon_ebird_df, nyc, left = FALSE)
 - Problem: Unsanitary pigeon condition versus trapping pigeon
 - Problem detail: Pigeon waste versus pigeon odor
 
+``` r
+complaint_type_plot = 
+  pigeon_311_df |> 
+  count(complaint_type, name = "n_reports") |> 
+  ggplot(aes(x = complaint_type, y = n_reports)) +
+  geom_col() +
+  labs(
+    title = "311 Pigeon Related Complaint Types",
+    x = "Complaint Type",
+    y = "Number of Pigeon Related Complaints"
+  ) +
+  theme_minimal()
+
+complaint_descriptor_plot = 
+  pigeon_311_df |> 
+  filter(!is.na(complaint_descriptor), complaint_descriptor != "N/A") |>
+  count(complaint_descriptor, name = "n_reports") |> 
+  ggplot(aes(x = complaint_descriptor, y = n_reports)) +
+  geom_col() +
+  labs(
+    title = "311 Pigeon Related Complaint Descriptors",
+    x = "Complaint Descriptor",
+    y = "Number of Pigeon Related Complaints"
+  ) +
+  theme_minimal()
+
+complaint_type_plot + complaint_descriptor_plot
+```
+
+![](data_cleaning_files/figure-gfm/unnamed-chunk-8-1.png)<!-- --> I can
+make all of these plots more attractive once we commit to including
+them!!
+
 4)  Pigeon complaint by building type
 
 - Residential building versus commercial building versus school versus
   street area, etc.
 
-5)  Brief scientific overview of pigeon species in NYC
+``` r
+pigeon_311_df |> 
+  count(location_type, name = "n_reports") |> 
+  mutate(location_type = fct_reorder(location_type, n_reports)) |>
+  ggplot(aes(x = location_type, y = n_reports)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous() +
+  labs(
+    title = "311 Pigeon Related Complaints by Building Type",
+    x = "Building Type",
+    y = "Number of Pigeon Related Complaints"
+  ) +
+  theme_minimal()
+```
+
+![](data_cleaning_files/figure-gfm/unnamed-chunk-9-1.png)<!-- --> Note:
+we should probably combine some of these categories (ie. 1-2
+FamilyDwelling with 1-2 Family Dwelling)
+
+5)  Brief scientific overview of pigeon species in NYC (EJ)
 
 6)  Are there correlations between where pigeon sightings are reported
     on eBird and where people file pigeon complaints?
