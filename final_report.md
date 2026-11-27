@@ -1,0 +1,32 @@
+final_report
+================
+Giuliana Motta, Max Hyman, Jonathan Morris, Emma Johnston
+2026-11-27
+
+# Final Report
+
+## Motivation and related work
+
+## Initial questions
+
+- types of pigeon-related complaints made to 311
+- trends in complaint type, amount, location
+- correlations with pigeon sightings in eBird
+
+Once we looked at the data, we became interested in the time it took to
+resolve complaints - areas where pigeon complaints are resolved slower
+or quicker - whether that corresponds with income levels based on census
+data - analyzing whether the resolution time was randomly distributed
+across the boroughs or correlated with neighborhood
+
+## Data
+
+### Data collection and cleaning
+
+## Exploratory analyses
+
+### Results, summaries, and visualizations
+
+## Additional Analyses
+
+## Discussion
