@@ -13,6 +13,7 @@ library(lubridate)
 library(sf)
 library(tigris)
 library(patchwork)
+library(scales)
 ```
 
 ## Load and process 311 data:
@@ -52,7 +53,8 @@ income_df =
     cache_table = TRUE,
     geometry = TRUE) |> 
   st_transform(4326) |> 
-  select(geometry, estimate, moe)
+  janitor::clean_names() |> 
+  select(geoid, geometry, estimate, moe)
 ```
 ## Merge income data with the 311 data:
 ```{r}
@@ -164,8 +166,174 @@ Each year, the number of 311 pigeon related complaints peaks in late summer befo
 
 2)  Geographical distribution of complaints
 
+Spatial visualization of complaints, ebird sightings, and median household income
+```{r}
+land_boundary_sf =
+  read_csv("data/Modified_Zip_Code_Tabulation_Areas_(MODZCTA)_20260924.csv") |> 
+  st_as_sf( wkt = "the_geom", crs = 4326) |> 
+  st_make_valid() |> 
+  st_union()
+
+income_df= 
+  st_intersection(income_df, land_boundary_sf)
+
+#income
+ggplot() +
+  geom_sf(
+    data = income_df,
+    aes(fill = estimate),
+    color = NA
+  ) +
+ scale_fill_gradientn(
+    name = "($)",
+    colors = scales:: brewer_pal(palette = "YlGnBu")(9),
+    trans = "sqrt",     
+  ) +
+  theme_void() +
+    labs(
+    title = "Median Annual Household Income by Census Tract, 2024",
+    caption = "*grey areas represent census tracts for which median household \nincome is not estimated by the ACS due to a small populations")
+  
+#Complaint locations
+ggplot()+
+    geom_sf(
+    data = income_df,
+    color="grey84") +
+  geom_sf(
+    data = pigeon_311_sf, 
+    size = 0.1,
+    alpha = 0.1,
+    color = "red"
+  ) +
+  theme_void()+
+  labs(
+    title = "Locations of 311 Pigeon Related Complaints, 2020-2026")
+
+#ebird sighting locations
+ggplot()+
+    geom_sf(
+    data = income_df,
+    color="grey84") +
+  geom_sf(
+    data = pigeon_ebird_df, 
+    size = 0.1,
+    alpha = 0.1,
+    color = "red"
+  ) +
+  theme_void()+
+  labs(
+    title = "Locations of Pigeon eBird Sightings, 2020-2025")
+
+```
+
+
+Spatial visualization of number of pigeon complaints and ebird sightings per census tract 
+**unsure if this step should go in the data cleaning
+```{r}
+pigeon_counts_census_tract =
+  income_df |> 
+  mutate(
+    n_complaints = lengths(st_intersects(income_df, pigeon_311_sf)), 
+    n_sightings = lengths(st_intersects(income_df, pigeon_ebird_df))
+  ) |> 
+  relocate(n_complaints, n_sightings, estimate, moe, geometry) |> 
+  st_intersection(land_boundary_sf)
+
+#complaints
+complaints_census_tract_map=
+ggplot() +
+  geom_sf(
+    data = pigeon_counts_census_tract,
+    aes(fill = n_complaints),
+    color = NA
+  ) +
+ scale_fill_gradientn(
+    name = "Count",
+    colors = scales:: brewer_pal(palette = "YlGnBu")(9),
+    trans = "log1p",     
+  ) +
+  geom_sf(
+    data = land_boundary_sf,
+    fill = NA,
+    color = "grey80"
+  ) +
+  theme_void() +
+    labs(
+    title = "Number of Pigeon Related Complaints \nby Census Tract")
+
+#sightings
+sightings_census_tract_map =
+ggplot() +
+  geom_sf(
+    data = pigeon_counts_census_tract,
+    aes(fill = n_sightings),
+    color = NA
+  ) +
+ scale_fill_gradientn(
+    name = "Count",
+    colors = scales:: brewer_pal(palette = "YlGnBu")(9),
+    trans = "log1p",
+    breaks = c(0, 100, 1000, 10000, 40000)
+  ) +
+  geom_sf(
+    data = land_boundary_sf,
+    fill = NA,
+    color = "grey80"
+  ) +
+  theme_void() +
+    labs(
+    title = "Number of eBird Pigeon Sightings \nby Census Tract")
+
+complaints_census_tract_map+sightings_census_tract_map 
+
+```
+
+Scatterplots to visualize correlation between pigeon complaints, pigeon sightings, and income
+```{r}
+income_by_complaints =
+  pigeon_counts_census_tract |> 
+  ggplot(aes(x = estimate, y = n_complaints)) + 
+  geom_point(
+    color = "turquoise4",
+    alpha = 0.5
+  ) +
+  scale_y_continuous(
+    limits = c(0, 130))+
+  labs(
+    title    = "Pigeon Complaints and Median Income \nby Census Tract",
+    x        = "Median Annual Household Income ($)",
+    y        = "Number Complaints"
+  ) +
+  theme_minimal()
+
+income_by_sightings =
+  pigeon_counts_census_tract |> 
+  ggplot(aes(x = estimate, y = n_sightings)) + 
+  geom_point(
+    color = "turquoise4",
+    alpha = 0.5
+  ) +
+  scale_y_continuous(
+    limits = c(0, 6000))+
+  labs(
+    title    = "Pigeon eBrid Sightings and Median Income \nby Census Tract",
+    x        = "Median Annual Household Income ($)",
+    y        = "Number Sightings"
+  ) +
+  theme_minimal()
+
+
+income_by_complaints + income_by_sightings
+
+#can also create density plots for this 
+
+```
+
+
 - By borough and neighborhood (incorporate income)
 - Temporal trends of pigeon complaints by borough
+
+
 
 3)  Type and details of complaints
 
